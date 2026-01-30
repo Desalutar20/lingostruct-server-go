@@ -1,5 +1,11 @@
 package config
 
+import (
+	"fmt"
+
+	"github.com/redis/go-redis/v9"
+)
+
 type RedisConfig struct {
 	Host     string `env:"REDIS_HOST,notEmpty" validate:"hostname|ip"`
 	Port     uint   `env:"REDIS_PORT,notEmpty" validate:"port"`
@@ -8,10 +14,11 @@ type RedisConfig struct {
 	Database uint   `env:"REDIS_DATABASE,notEmpty" validate:"min=0,max=15"`
 }
 
-// /   "Redis": {
-// // 	"Host": "Localhost",
-// // 	"Port": 6379,
-// // 	"User": "",
-// // 	"Password": "",
-// // 	"Database": 0
-// //   },
+func (c *RedisConfig) ConnectOptions() *redis.Options {
+	return &redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", c.Host, c.Port),
+		Username: c.User,
+		Password: c.Password,
+		DB:       int(c.Database),
+	}
+}

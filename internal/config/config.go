@@ -27,10 +27,8 @@ func New() *Config {
 
 		for _, e := range ve {
 			fmt.Printf(
-				"config error: %s failed '%s' (value=%v)\n",
-				e.Namespace(),
-				e.Tag(),
-				e.Value(),
+				"config error: %s\n",
+				e.Error(),
 			)
 		}
 
