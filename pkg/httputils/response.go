@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-type successResponse[T any] struct {
-	Data T `json:"data"`
+type successResponse struct {
+	Data any `json:"data"`
 }
 
 type errorResponse struct {
@@ -27,7 +27,7 @@ func writeResponse(w http.ResponseWriter, data any, statusCode int) {
 }
 
 func SuccessResponse[T any](w http.ResponseWriter, data T, statusCode int) {
-	response := successResponse[T]{Data: data}
+	response := successResponse{Data: data}
 
 	writeResponse(w, response, statusCode)
 }

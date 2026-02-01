@@ -13,7 +13,7 @@ import (
 func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	logger := h.logger.With(slog.String("request_id", middlewares.GetReqID(r.Context())))
 
-	data, err := httputils.ParseBody[dto.SignInRequest](w, r)
+	data, err := httputils.ParseData[dto.SignInRequest](w, r.Body)
 	if err != nil {
 		return
 	}

@@ -29,6 +29,7 @@ func (m *Module) V1(middlewares *middlewares.Middlewares) *chi.Mux {
 		r.Use(middlewares.Authenticate)
 		r.Post("/logout", m.handler.Logout)
 		r.Get("/me", m.handler.Me)
+		r.Patch("/me", m.handler.UpdateProfile)
 	})
 
 	return router

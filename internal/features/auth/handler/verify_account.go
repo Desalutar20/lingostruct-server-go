@@ -13,7 +13,7 @@ import (
 func (h *Handler) VerifyAccount(w http.ResponseWriter, r *http.Request) {
 	logger := h.logger.With(slog.String("request_id", middlewares.GetReqID(r.Context())))
 
-	data, err := httputils.ParseBody[dto.VerifyAccountRequest](w, r)
+	data, err := httputils.ParseData[dto.VerifyAccountRequest](w, r.Body)
 	if err != nil {
 		return
 	}

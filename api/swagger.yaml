@@ -1,0 +1,448 @@
+openapi: 3.1.0
+info:
+    title: lingostruct API
+    version: "1.0"
+
+servers:
+    - url: http://localhost:4000/api/v1/
+      description: dev server
+
+paths:
+    /auth/sign-up:
+        post:
+            description: Creates a user and sends a verification email
+            tags:
+                - Authentication
+            operationId: SignUp
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/SignUpRequest"
+            responses:
+                "201":
+                    description: Created
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: string
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/ValidationErrorResponse"
+                                    - $ref: "#/components/schemas/ErrorResponse"
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /auth/verify-account:
+        post:
+            description: Verifies a user's account using a verification token sent via email
+            tags:
+                - Authentication
+            operationId: VerifyAccount
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/VerifyAccountRequest"
+            responses:
+                "200":
+                    description: Account verified successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: string
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/ValidationErrorResponse"
+                                    - $ref: "#/components/schemas/ErrorResponse"
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /auth/sign-in:
+        post:
+            description: Authenticates a user and returns user data
+            tags:
+                - Authentication
+            operationId: SignIn
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/SignInRequest"
+            responses:
+                "200":
+                    description: Logged in successfully
+                    headers:
+                        Set-Cookie:
+                            description: Session cookie (HttpOnly, Secure, SameSite=Strict)
+                            schema:
+                                type: string
+                                example: "<cookie_name>=<cookie_value>; Path=/; HttpOnly; Secure; SameSite=Strict"
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: "#/components/schemas/UserResponse"
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/ValidationErrorResponse"
+                                    - $ref: "#/components/schemas/ErrorResponse"
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /auth/logout:
+        post:
+            description: Logs out the user and clears the session cookie
+            tags:
+                - Authentication
+            operationId: Logout
+            responses:
+                "200":
+                    description: Logout successfully
+                    headers:
+                        Set-Cookie:
+                            description: Clears session cookie
+                            schema:
+                                type: string
+                                example: "<cookie_name>=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: string
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /auth/forgot-password:
+        post:
+            description: Sends a password reset link to the user's email
+            tags:
+                - Authentication
+            operationId: ForgotPassword
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ForgotPasswordRequest"
+            responses:
+                "200":
+                    description: Password reset email sent successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: string
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/ValidationErrorResponse"
+                                    - $ref: "#/components/schemas/ErrorResponse"
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /auth/reset-password:
+        post:
+            description: Resets the user's password using a valid reset token
+            tags:
+                - Authentication
+            operationId: ResetPassword
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ResetPasswordRequest"
+            responses:
+                "200":
+                    description: Password has been reset successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: string
+                "400":
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/ValidationErrorResponse"
+                                    - $ref: "#/components/schemas/ErrorResponse"
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /auth/me:
+        get:
+            description: Returns the current logged-in user's profile
+            tags:
+                - Authentication
+            operationId: Me
+            responses:
+                "200":
+                    description: Current user profile
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/SuccessResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: "#/components/schemas/UserResponse"
+                "401":
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+                "500":
+                    description: Internal server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+components:
+    schemas:
+        SignUpRequest:
+            type: object
+            required:
+                - email
+                - password
+                - firstName
+                - lastName
+            properties:
+                email:
+                    type: string
+                    format: email
+                    examples:
+                        - test@gmail.com
+                password:
+                    type: string
+                    minLength: 8
+                    maxLength: 40
+                    examples:
+                        - password123
+                firstName:
+                    type: string
+                    minLength: 3
+                    maxLength: 40
+                    examples:
+                        - John
+                lastName:
+                    type: string
+                    minLength: 3
+                    maxLength: 40
+                    examples:
+                        - Johnson
+
+        VerifyAccountRequest:
+            type: object
+            required:
+                - email
+                - token
+            properties:
+                email:
+                    type: string
+                    format: email
+                    examples:
+                        - test@gmail.com
+                token:
+                    type: string
+                    examples:
+                        - token
+
+        SignInRequest:
+            type: object
+            required:
+                - email
+                - password
+            properties:
+                email:
+                    type: string
+                    format: email
+                    examples:
+                        - test@gmail.com
+                password:
+                    type: string
+                    minLength: 8
+                    maxLength: 40
+                    examples:
+                        - password123
+
+        ForgotPasswordRequest:
+            type: object
+            required:
+                - email
+            properties:
+                email:
+                    type: string
+                    format: email
+                    examples:
+                        - test@gmail.com
+
+        ResetPasswordRequest:
+            type: object
+            required:
+                - email
+                - token
+                - newPassword
+            properties:
+                email:
+                    type: string
+                    format: email
+                    examples:
+                        - test@gmail.com
+                token:
+                    type: string
+                    examples:
+                        - token
+                newPassword:
+                    type: string
+                    minLength: 8
+                    maxLength: 40
+                    examples:
+                        - password123
+
+        UserResponse:
+            type: object
+            required:
+                - id
+                - deletedAt
+                - firstName
+                - lastName
+                - email
+                - role
+                - avatarId
+                - avatarUrl
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                deletedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                firstName:
+                    type: string
+                lastName:
+                    type: string
+                email:
+                    type: string
+                    format: email
+                role:
+                    type: string
+                    enum: ["regular", "admin"]
+                avatarId:
+                    type: string
+                    nullable: true
+                avatarUrl:
+                    type: string
+                    nullable: true
+
+        SuccessResponse:
+            type: object
+            required:
+                - data
+            properties:
+                data:
+                    nullable: true
+                    description: Response payload
+
+        ErrorResponse:
+            type: object
+            required:
+                - error
+            properties:
+                error:
+                    type: string
+            examples:
+                - error: "error message"
+
+        ValidationErrorResponse:
+            type: object
+            required:
+                - errors
+            properties:
+                errors:
+                    type: object
+                    additionalProperties:
+                        type: string
+                    examples:
+                        - email: invalid email
+                          password: password too short

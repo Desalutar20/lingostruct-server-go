@@ -3,6 +3,7 @@ package httputils
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -11,11 +12,10 @@ import (
 
 var validate *validator.Validate
 
-func ParseBody[T any](w http.ResponseWriter, r *http.Request) (*T, error) {
+func ParseData[T any](w http.ResponseWriter, r io.Reader) (*T, error) {
 
 	var data T
-	err := json.NewDecoder(r.Body).Decode(&data)
-
+	err := json.NewDecoder(r).Decode(&data)
 	if err != nil {
 		ErrorResponse(w, "invalid request body", http.StatusBadRequest)
 		return nil, err
