@@ -50,5 +50,4 @@ func New(ctx context.Context, config *config.DatabaseConfig) (*pgxpool.Pool, err
 	}
 
 	return connPool, nil
-
 }

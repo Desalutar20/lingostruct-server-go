@@ -65,3 +65,14 @@ func ValidationError(field string, errors []string) Error {
 func ConflictError(message string) Error {
 	return Error{message: message, code: Conflict}
 }
+
+func UnautorizedError() Error {
+	return Error{message: "Unauthorized", code: Unauthorized}
+}
+func AccessForbiddenError() Error {
+	return Error{message: "Access forbidden", code: AccessForbidden}
+}
+
+func InternalError(message string) Error {
+	return Error{message: message, code: Internal}
+}
