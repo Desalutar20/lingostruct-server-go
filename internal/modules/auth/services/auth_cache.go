@@ -3,12 +3,10 @@ package authservices
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain/valueobjects"
-	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/utils/ptrutil"
 	userdomain "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/domain"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -85,10 +83,10 @@ func (c *AuthCache) getUserId(ctx context.Context, tokenType tokenType, token va
 
 	parsed, err := uuid.Parse(value)
 	if err != nil {
-		return nil, domain.InternalError(fmt.Sprint("Invalid user id stored in Redis for token type '%s' ", tokenType))
+		return nil, domain.InternalError("Invalid user id stored in Redis")
 	}
 
-	return ptrutil.To(userdomain.UserId(parsed)), nil
+	return new(userdomain.UserId(parsed)), nil
 }
 
 func NewAuthCache(redis *redis.Client, appConfig *config.ApplicationConfig, keyGenerator RedisKeyGenerator) *AuthCache {

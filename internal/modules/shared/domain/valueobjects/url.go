@@ -11,7 +11,7 @@ type Url struct {
 }
 
 func NewUrl(value string) (Url, error) {
-	return NewNonEmptyStringBase[Url](value, "url", "Url", 0, 0,
+	return NewNonEmptyStringBase(value, "url", "Url", 0, 0,
 		func(value string) error {
 			u, err := url.Parse(value)
 			if err != nil {
@@ -20,7 +20,7 @@ func NewUrl(value string) (Url, error) {
 				})
 			}
 
-			if u.Scheme != "http" || u.Scheme != "https" {
+			if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 				return domain.ValidationError("url", []string{
 					"Invalid URL",
 				})

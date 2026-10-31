@@ -1,4 +1,4 @@
-package sliceutils
+package sliceutil
 
 func Every[T any](slice []T, predicate func(value T) bool) bool {
 	for _, v := range slice {

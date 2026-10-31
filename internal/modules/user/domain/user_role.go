@@ -14,7 +14,7 @@ type UserRole struct {
 var validRoles []string = []string{"admin", "regular"}
 
 func NewUserRole(value string) (UserRole, error) {
-	return valueobjects.NewNonEmptyStringBase[UserRole](value, "role", "User role", 0, 0,
+	return valueobjects.NewNonEmptyStringBase(value, "role", "User role", 0, 0,
 		func(value string) error {
 			if !slices.Contains(validRoles, value) {
 				return domain.ValidationError("role", []string{"Invalid user role: " + value})

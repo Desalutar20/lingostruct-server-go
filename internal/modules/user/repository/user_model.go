@@ -25,7 +25,7 @@ type userDB struct {
 }
 
 func (u userDB) ToDomain() *userdomain.User {
-	return ptrutil.To(userdomain.RestoreUser(
+	return new(userdomain.RestoreUser(
 		u.ID,
 		u.CreatedAt,
 		u.UpdatedAt,

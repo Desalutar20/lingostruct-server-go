@@ -9,7 +9,7 @@ type FirstName struct {
 const FirstNameMaxLength = 30
 
 func NewFirstName(value string) (FirstName, error) {
-	return valueobjects.NewNonEmptyStringBase[FirstName](value, "firstName", "First name", 0, FirstNameMaxLength,
+	return valueobjects.NewNonEmptyStringBase(value, "firstName", "First name", 0, FirstNameMaxLength,
 		nil,
 		func(value valueobjects.NonEmptyString) FirstName {
 			return FirstName{NonEmptyString: value}

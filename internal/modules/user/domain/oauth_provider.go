@@ -11,19 +11,20 @@ type OAuthProvider struct {
 	valueobjects.NonEmptyString
 }
 
-var validProviders []string = []string{"google", "github"}
+var validProviders = []string{"google", "github"}
 
 func NewOAuthProvider(value string) (OAuthProvider, error) {
-	if !slices.Contains(validProviders, value) {
-		return OAuthProvider{}, domain.ValidationError("provider", []string{"Invalid oauth provider: " + value})
-	}
-
-	nonEmpty, _ := valueobjects.NewNonEmptyString(value, "provider", "Provider", 0, 0,
-		nil)
-
-	return OAuthProvider{
-		NonEmptyString: nonEmpty,
-	}, nil
+	return valueobjects.NewNonEmptyStringBase(value, "provider", "OAuth provider", 0, 0,
+		func(value string) error {
+			if !slices.Contains(validProviders, value) {
+				return domain.ValidationError("provider", []string{"Invalid OAuth provider: " + value})
+			}
+			return nil
+		},
+		func(value valueobjects.NonEmptyString) OAuthProvider {
+			return OAuthProvider{NonEmptyString: value}
+		},
+	)
 }
 
 func mustOAuthProvider(value string) OAuthProvider {

@@ -11,11 +11,10 @@ type LastName struct {
 const LastNameMaxLength = 50
 
 func NewLastName(value string) (LastName, error) {
-	return valueobjects.NewNonEmptyStringBase[LastName](value, "lastName", "Last name", 0, LastNameMaxLength,
+	return valueobjects.NewNonEmptyStringBase(value, "lastName", "Last name", 0, LastNameMaxLength,
 		nil,
 		func(value valueobjects.NonEmptyString) LastName {
 			return LastName{NonEmptyString: value}
 		},
 	)
 }
-

@@ -165,7 +165,7 @@ func RestoreUser(
 	userRole, _ := NewUserRole(role)
 
 	return User{
-		Entity:         domain.RestoreEntity[UserId](userID, createdAt, updatedAt),
+		Entity:         domain.RestoreEntity(userID, createdAt, updatedAt),
 		firstName:      voutil.Restore(firstName, NewFirstName),
 		lastName:       voutil.Restore(lastName, NewLastName),
 		email:          userEmail,

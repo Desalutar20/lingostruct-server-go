@@ -9,7 +9,7 @@ type ProviderId struct {
 const ProviderIdMaxLength = 100
 
 func NewProviderId(value string) (ProviderId, error) {
-	return valueobjects.NewNonEmptyStringBase[ProviderId](value, "providerId", "Provider ID", 0, ProviderIdMaxLength,
+	return valueobjects.NewNonEmptyStringBase(value, "providerId", "Provider ID", 0, ProviderIdMaxLength,
 		nil,
 		func(value valueobjects.NonEmptyString) ProviderId {
 			return ProviderId{NonEmptyString: value}

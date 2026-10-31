@@ -13,7 +13,7 @@ const HashedPasswordMinLength = 40
 const HashedPasswordMaxLength = 200
 
 func NewHashedPassword(value string) (HashedPassword, error) {
-	val, err := valueobjects.NewNonEmptyStringBase[HashedPassword](value, "password", "Password", HashedPasswordMinLength, HashedPasswordMaxLength,
+	val, err := valueobjects.NewNonEmptyStringBase(value, "password", "Password", HashedPasswordMinLength, HashedPasswordMaxLength,
 		nil,
 		func(value valueobjects.NonEmptyString) HashedPassword {
 			return HashedPassword{NonEmptyString: value}
