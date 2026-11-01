@@ -19,10 +19,14 @@ func NewEmailService(config *config.SmtpConfig) (*EmailService, error) {
 	client, err := mail.NewClient(
 		config.Host,
 		mail.WithPort(config.Port),
-		mail.WithSMTPAuth(mail.SMTPAuthAutoDiscover),
+		mail.WithTLSPolicy(map[bool]mail.TLSPolicy{
+			true:  mail.TLSMandatory,
+			false: mail.NoTLS,
+		}[*config.Tls]),
+		mail.WithTimeout(10*time.Second),
+		mail.WithSMTPAuth(mail.SMTPAuthLogin),
 		mail.WithUsername(config.User),
 		mail.WithPassword(config.Password),
-		mail.WithTimeout(10*time.Second),
 	)
 
 	if err != nil {

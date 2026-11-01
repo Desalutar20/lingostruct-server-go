@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/Desalutar20/lingostruct-server-go/internal/database/postgres"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain/valueobjects"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/utils/dbutil"
@@ -40,18 +42,23 @@ const selectUser = `
 	FROM users
 `
 
-func (r *UserRepository) GetById(ctx context.Context, id userdomain.UserId) (*userdomain.User, error) {
-	return r.getUser(ctx, selectUser+` WHERE id = $1`, id)
+func (r *UserRepository) GetById(ctx context.Context, id userdomain.UserId, tx pgx.Tx) (*userdomain.User, error) {
+	return r.getUser(ctx, tx, selectUser+` WHERE id = $1`, id)
 }
 
-func (r *UserRepository) GetByEmail(ctx context.Context, email valueobjects.Email) (*userdomain.User, error) {
-	return r.getUser(ctx, selectUser+` WHERE email = $1`, email.Value())
+func (r *UserRepository) GetByEmail(ctx context.Context, email valueobjects.Email, tx pgx.Tx) (*userdomain.User, error) {
+	return r.getUser(ctx, tx, selectUser+` WHERE email = $1`, email.Value())
 }
 
-func (r *UserRepository) Add(ctx context.Context, user *userdomain.User) error {
+func (r *UserRepository) Add(ctx context.Context, user *userdomain.User, tx pgx.Tx) error {
+	var q postgres.Querier = r.pool
+	if tx != nil {
+		q = tx
+	}
+
 	userDb := fromDomain(user)
 
-	_, err := r.pool.Exec(ctx, `
+	_, err := q.Exec(ctx, `
 		INSERT INTO users (
 			id,
 			created_at,
@@ -89,7 +96,7 @@ func (r *UserRepository) Add(ctx context.Context, user *userdomain.User) error {
 
 	if err != nil {
 		if dbutil.IsDuplicateError(err) {
-			return usererrors.UserAlreadyExists
+			return usererrors.ErrUserAlreadyExists
 		}
 
 		return domain.InternalError(
@@ -100,10 +107,80 @@ func (r *UserRepository) Add(ctx context.Context, user *userdomain.User) error {
 	return nil
 }
 
-func (r *UserRepository) getUser(ctx context.Context, query string, args ...any) (*userdomain.User, error) {
+func (r *UserRepository) Update(ctx context.Context, user *userdomain.User, tx pgx.Tx) error {
+	var q postgres.Querier = r.pool
+	if tx != nil {
+		q = tx
+	}
+	userDb := fromDomain(user)
+
+	_, err := q.Exec(ctx, `
+		UPDATE users SET
+			updated_at = $1,
+			first_name = $2,
+			last_name = $3,
+			email = $4,
+			hashed_password = $5,
+			role = $6,
+			is_banned = $7,
+			is_verified = $8,
+			avatar_url = $9,
+			google_id = $10,
+			github_id = $11
+		WHERE id = $12
+	`,
+		time.Now(),
+		userDb.FirstName,
+		userDb.LastName,
+		userDb.Email,
+		userDb.HashedPassword,
+		userDb.Role,
+		userDb.IsBanned,
+		userDb.IsVerified,
+		userDb.AvatarURL,
+		userDb.GoogleID,
+		userDb.GithubID,
+		user.Id(),
+	)
+
+	if err != nil {
+		return domain.InternalError(
+			fmt.Sprintf("Failed to update user: %v", err),
+		)
+	}
+
+	return nil
+}
+
+func (r *UserRepository) Remove(ctx context.Context, user *userdomain.User, tx pgx.Tx) error {
+	var q postgres.Querier = r.pool
+	if tx != nil {
+		q = tx
+	}
+
+	_, err := q.Exec(ctx, `
+		DELETE FROM users WHERE id = $1
+	`,
+		user.Id(),
+	)
+
+	if err != nil {
+		return domain.InternalError(
+			fmt.Sprintf("Failed to remove user: %v", err),
+		)
+	}
+
+	return nil
+}
+
+func (r *UserRepository) getUser(ctx context.Context, tx pgx.Tx, query string, args ...any) (*userdomain.User, error) {
+	var q postgres.Querier = r.pool
+	if tx != nil {
+		q = tx
+	}
 	var user userDB
 
-	err := r.pool.QueryRow(ctx, query, args...).Scan(
+	err := q.QueryRow(ctx, query, args...).Scan(
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,

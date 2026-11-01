@@ -49,7 +49,7 @@ func buildURL(
 }
 
 func BuildAccountVerificationEmail(
-	config config.ApplicationConfig,
+	config *config.ApplicationConfig,
 	to valueobjects.Email,
 	token valueobjects.NonEmptyString,
 ) (EmailMessage, error) {
@@ -102,7 +102,7 @@ Thank you`,
 }
 
 func BuildResetPasswordEmail(
-	config config.ApplicationConfig,
+	config *config.ApplicationConfig,
 	to valueobjects.Email,
 	token valueobjects.NonEmptyString,
 ) (EmailMessage, error) {

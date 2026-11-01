@@ -3,23 +3,27 @@ package app
 import (
 	"context"
 	"errors"
-	"log"
 )
 
 func (a *App) Close(ctx context.Context) error {
-	shutdownErr := a.server.Shutdown(ctx)
-	if shutdownErr != nil {
-		if err := a.server.Close(); err != nil {
-			log.Printf("Failed to force close HTTP server: %v", err)
+	var shutdownErr error
+
+	if err := a.server.Shutdown(ctx); err != nil {
+		shutdownErr = errors.Join(shutdownErr, err)
+
+		if closeErr := a.server.Close(); closeErr != nil {
+			shutdownErr = errors.Join(shutdownErr, closeErr)
 		}
 	}
 
+	a.jobs.Wait()
+
 	if err := a.redis.Close(); err != nil {
-		return errors.Join(shutdownErr, err)
+		shutdownErr = errors.Join(shutdownErr, err)
 	}
 
 	if err := a.emailService.Close(); err != nil {
-		return errors.Join(shutdownErr, err)
+		shutdownErr = errors.Join(shutdownErr, err)
 	}
 
 	a.pool.Close()

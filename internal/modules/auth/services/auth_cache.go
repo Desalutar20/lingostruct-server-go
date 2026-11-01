@@ -24,6 +24,8 @@ type RedisKeyGenerator interface {
 	SessionKey(sessionId uuid.UUID) string
 	SessionsKey(userId userdomain.UserId) string
 	PasswordResetKey(token valueobjects.NonEmptyString) string
+	SessionPrefix() string
+	SessionsPrefix() string
 }
 
 type AuthCache struct {
@@ -58,7 +60,7 @@ func (c *AuthCache) storeUserId(ctx context.Context, tokenType tokenType, userId
 		key = c.keyGenerator.PasswordResetKey(token)
 	}
 
-	return c.redis.Set(ctx, key, userId, c.appConfig.ResetPasswordTtl).Err()
+	return c.redis.Set(ctx, key, userId.String(), c.appConfig.ResetPasswordTtl).Err()
 }
 
 func (c *AuthCache) getUserId(ctx context.Context, tokenType tokenType, token valueobjects.NonEmptyString) (*userdomain.UserId, error) {
@@ -86,7 +88,9 @@ func (c *AuthCache) getUserId(ctx context.Context, tokenType tokenType, token va
 		return nil, domain.InternalError("Invalid user id stored in Redis")
 	}
 
-	return new(userdomain.UserId(parsed)), nil
+	converted := userdomain.UserId(parsed)
+
+	return &converted, nil
 }
 
 func NewAuthCache(redis *redis.Client, appConfig *config.ApplicationConfig, keyGenerator RedisKeyGenerator) *AuthCache {

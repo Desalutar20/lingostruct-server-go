@@ -8,11 +8,6 @@ import (
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain"
 )
 
-type ErrorDTO struct {
-	Error  string              `json:"error"`
-	Errors map[string][]string `json:"errors,omitempty"`
-}
-
 func WriteError(w http.ResponseWriter, err error, log *slog.Logger) bool {
 	if err == nil {
 		return false

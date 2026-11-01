@@ -17,8 +17,9 @@ func NewUserRole(value string) (UserRole, error) {
 	return valueobjects.NewNonEmptyStringBase(value, "role", "User role", 0, 0,
 		func(value string) error {
 			if !slices.Contains(validRoles, value) {
-				return domain.ValidationError("role", []string{"Invalid user role: " + value})
+				return domain.InternalError("Invalid user role: " + value)
 			}
+
 			return nil
 		},
 		func(value valueobjects.NonEmptyString) UserRole {

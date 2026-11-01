@@ -13,18 +13,3 @@ func NewId() Id {
 func (id Id) String() string {
 	return uuid.UUID(id).String()
 }
-
-func (id Id) MarshalBinary() ([]byte, error) {
-	return uuid.UUID(id).MarshalBinary()
-}
-
-func (id *Id) UnmarshalBinary(data []byte) error {
-	var value uuid.UUID
-
-	if err := value.UnmarshalBinary(data); err != nil {
-		return err
-	}
-
-	*id = Id(value)
-	return nil
-}

@@ -1,5 +1,9 @@
 package ptrutil
 
+func To[T any](value T) *T {
+	return &value
+}
+
 func ValuePtr[T any, V interface {
 	Value() T
 }](value *V) *T {
@@ -7,5 +11,5 @@ func ValuePtr[T any, V interface {
 		return nil
 	}
 
-	return new((*value).Value())
+	return To((*value).Value())
 }

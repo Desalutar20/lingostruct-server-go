@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/Desalutar20/lingostruct-server-go/internal/background"
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
 	"github.com/Desalutar20/lingostruct-server-go/internal/database/postgres"
 	rd "github.com/Desalutar20/lingostruct-server-go/internal/database/redis"
@@ -24,10 +25,14 @@ type App struct {
 	pool         *pgxpool.Pool
 	redis        *redis.Client
 	emailService *email.EmailService
+	jobs         *background.Jobs
+	ctx          context.Context
 }
 
 func (a *App) Run() error {
 	log.Printf("Server starting on %s.\n", a.server.Addr)
+
+	a.jobs.Start(a.ctx)
 
 	return a.server.ListenAndServe()
 }
@@ -57,7 +62,8 @@ func New(ctx context.Context, config *config.Config, logger *slog.Logger) (*App,
 	v1 := chi.NewRouter()
 	router.Mount("/api/v1", v1)
 
-	setupModules(config, pool, redis, logger, v1, services)
+	modules := setupModules(config, pool, redis, logger, v1, services)
+	jobs := setupBackgroundJobs(logger, modules)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", config.Application.Host, config.Application.Port),
@@ -72,5 +78,7 @@ func New(ctx context.Context, config *config.Config, logger *slog.Logger) (*App,
 		pool,
 		redis,
 		services.EmailService,
+		jobs,
+		ctx,
 	}, nil
 }
