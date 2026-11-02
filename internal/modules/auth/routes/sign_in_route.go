@@ -65,7 +65,9 @@ func (router *AuthRouter) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := routes.WriteJSON(w, http.StatusCreated, routes.ResponseDTO[userdto.UserDto]{
+	router.SetCookie(w, router.config.SessionCookieName, result.SessionId.String(), int(router.config.SessionTtl.Seconds()))
+
+	if err := routes.WriteJSON(w, http.StatusOK, routes.ResponseDTO[userdto.UserDto]{
 		Data: result.UserDto,
 	}); err != nil {
 		router.logger.Error(

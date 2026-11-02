@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
-	authdto "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/dto"
+	authtypes "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/types"
+	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain"
 	userdomain "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/domain"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -22,7 +23,7 @@ type SessionStore struct {
 	redisConfig  *config.RedisConfig
 }
 
-func (s *SessionStore) Save(ctx context.Context, session authdto.Session) (uuid.UUID, error) {
+func (s *SessionStore) Save(ctx context.Context, session authtypes.Session) (uuid.UUID, error) {
 	sessionId := uuid.New()
 
 	sessionKey := s.keyGenerator.SessionKey(sessionId)
@@ -30,7 +31,9 @@ func (s *SessionStore) Save(ctx context.Context, session authdto.Session) (uuid.
 
 	data, err := json.Marshal(session)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, domain.InternalError(
+			fmt.Sprintf("SessionStore.Save: failed to marshal session: %v", err),
+		)
 	}
 
 	ttl := s.appConfig.SessionTtl
@@ -42,12 +45,16 @@ func (s *SessionStore) Save(ctx context.Context, session authdto.Session) (uuid.
 	pipe.Set(ctx, sessionKey, data, ttl)
 	pipe.ZAdd(ctx, sessionsKey, redis.Z{Score: score, Member: sessionId.String()})
 
-	_, err = pipe.Exec(ctx)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return uuid.Nil, domain.InternalError(
+			fmt.Sprintf("SessionStore.Save: failed to execute Redis pipeline: %v", err),
+		)
+	}
 
-	return sessionId, err
+	return sessionId, nil
 }
 
-func (s *SessionStore) Get(ctx context.Context, sessionId uuid.UUID) (*authdto.Session, error) {
+func (s *SessionStore) Get(ctx context.Context, sessionId uuid.UUID) (*authtypes.Session, error) {
 	sessionKey := s.keyGenerator.SessionKey(sessionId)
 
 	data, err := s.redis.Get(ctx, sessionKey).Bytes()
@@ -56,12 +63,16 @@ func (s *SessionStore) Get(ctx context.Context, sessionId uuid.UUID) (*authdto.S
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, domain.InternalError(
+			fmt.Sprintf("SessionStore.Get: failed to get session: %v", err),
+		)
 	}
 
-	var session authdto.Session
+	var session authtypes.Session
 	if err := json.Unmarshal(data, &session); err != nil {
-		return nil, err
+		return nil, domain.InternalError(
+			fmt.Sprintf("SessionStore.Get: failed to get session: %v", err),
+		)
 	}
 
 	return &session, nil
@@ -78,7 +89,9 @@ func (s *SessionStore) GetSessionIds(ctx context.Context, userId userdomain.User
 		Stop:    "+inf",
 	}).Result()
 	if err != nil {
-		return nil, err
+		return nil, domain.InternalError(
+			fmt.Sprintf("SessionStore.GetSessionIds: failed to retrieve session IDs: %v", err),
+		)
 	}
 
 	ids := make([]uuid.UUID, 0, len(values))
@@ -86,7 +99,9 @@ func (s *SessionStore) GetSessionIds(ctx context.Context, userId userdomain.User
 	for _, v := range values {
 		member, ok := v.Member.(string)
 		if !ok {
-			return nil, fmt.Errorf("unexpected session ID type: %T", v.Member)
+			return nil, domain.InternalError(
+				fmt.Sprintf("SessionStore.GetSessionIds: unexpected session ID type: %T", v.Member),
+			)
 		}
 
 		id, err := uuid.Parse(member)
@@ -109,8 +124,13 @@ func (s *SessionStore) Remove(ctx context.Context, userId userdomain.UserId, ses
 	pipe.Del(ctx, sessionKey)
 	pipe.ZRem(ctx, sessionsKey, sessionId.String())
 
-	_, err := pipe.Exec(ctx)
-	return err
+	if _, err := pipe.Exec(ctx); err != nil {
+		return domain.InternalError(
+			fmt.Sprintf("SessionStore.Remove: failed to execute Redis pipeline: %v", err),
+		)
+	}
+
+	return nil
 }
 
 func (s *SessionStore) RemoveAll(ctx context.Context, userId userdomain.UserId) error {
@@ -129,7 +149,11 @@ func (s *SessionStore) RemoveAll(ctx context.Context, userId userdomain.UserId) 
 
 	keys = append(keys, sessionsKey)
 
-	return s.redis.Del(ctx, keys...).Err()
+	if err := s.redis.Del(ctx, keys...).Err(); err != nil {
+		return domain.InternalError(fmt.Sprintf("SessionStore.RemoveAll: failed to get session IDs: %v", err))
+	}
+
+	return nil
 }
 
 func (s *SessionStore) RemoveExpired(ctx context.Context) error {
@@ -152,7 +176,7 @@ func (s *SessionStore) RemoveExpired(ctx context.Context) error {
 	for {
 		keys, nextCursor, err := s.redis.Scan(ctx, cursor, sessionsKeyPattern, 100).Result()
 		if err != nil {
-			return err
+			return domain.InternalError(fmt.Sprintf("SessionStore.RemoveExpired: failed to scan sessions: %v", err))
 		}
 
 		for _, sessionsKey := range keys {
@@ -163,7 +187,10 @@ func (s *SessionStore) RemoveExpired(ctx context.Context) error {
 				ByScore: true,
 			}).Result()
 			if err != nil {
-				return err
+				return domain.InternalError(fmt.Sprintf(
+					"SessionStore.RemoveExpired: failed to retrieve expired sessions from %s: %v",
+					sessionsKey, err,
+				))
 			}
 
 			if len(sessions) == 0 {
@@ -185,17 +212,26 @@ func (s *SessionStore) RemoveExpired(ctx context.Context) error {
 			pipe.ZRem(ctx, sessionsKey, membersToInterfaces(sessions)...)
 
 			if _, err := pipe.Exec(ctx); err != nil {
-				return err
+				return domain.InternalError(fmt.Sprintf(
+					"SessionStore.RemoveExpired: failed to delete expired sessions from %s: %v",
+					sessionsKey, err,
+				))
 			}
 
 			length, err := s.redis.ZCard(ctx, sessionsKey).Result()
 			if err != nil {
-				return err
+				return domain.InternalError(fmt.Sprintf(
+					"SessionStore.RemoveExpired: failed to count sessions in %s: %v",
+					sessionsKey, err,
+				))
 			}
 
 			if length == 0 {
 				if err := s.redis.Del(ctx, sessionsKey).Err(); err != nil {
-					return err
+					return domain.InternalError(fmt.Sprintf(
+						"SessionStore.RemoveExpired: failed to delete empty sessions set %s: %v",
+						sessionsKey, err,
+					))
 				}
 			}
 		}

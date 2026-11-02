@@ -16,6 +16,7 @@ func WriteError(w http.ResponseWriter, err error, log *slog.Logger) bool {
 	status := http.StatusInternalServerError
 	dto := ErrorDTO{
 		Error: "Internal Server Error",
+		Code:  "INTERNAL",
 	}
 
 	domainError, ok := errors.AsType[domain.Error](err)
@@ -23,6 +24,7 @@ func WriteError(w http.ResponseWriter, err error, log *slog.Logger) bool {
 		code := domainError.Code()
 		if code != domain.Internal {
 			dto.Error = domainError.Message()
+			dto.Code = code.String()
 		}
 
 		switch code {

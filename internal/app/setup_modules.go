@@ -29,6 +29,7 @@ func setupModules(config *config.Config, pool *pgxpool.Pool, redis *redis.Client
 		Logger:            logger,
 		AppConfig:         &config.Application,
 		RedisConfig:       &config.Redis,
+		OAuthConfig:       &config.OAuth,
 		UserRepository:    userModule.UserRepository,
 		OutboxRepository:  outbox.NewOutboxRepository(pool),
 		EmailSender:       services.EmailService,

@@ -23,7 +23,7 @@ type SignInCommandHandler struct {
 	config         *config.ApplicationConfig
 }
 
-func (h *SignInCommandHandler) Handle(ctx context.Context, command *SignInCommand) (*authdto.SignInResult, error) {
+func (h *SignInCommandHandler) Handle(ctx context.Context, command *SignInCommand) (*authdto.SignInResultDto, error) {
 	user, err := h.userRepository.GetByEmail(ctx, command.Email, nil)
 	if err != nil {
 		return nil, err
@@ -33,32 +33,12 @@ func (h *SignInCommandHandler) Handle(ctx context.Context, command *SignInComman
 		return nil, autherrors.ErrInvalidCredentials
 	}
 
-	sessionIds, err := h.sessionStore.GetSessionIds(ctx, user.Id())
+	session, sessionId, err := generateSession(ctx, user, h.sessionStore, h.config, true)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(sessionIds) >= h.config.MaxSessions {
-		if err := h.sessionStore.Remove(ctx, user.Id(), sessionIds[0]); err != nil {
-			return nil, err
-		}
-	}
-
-	session := authdto.Session{
-		UserId:    user.Id(),
-		Email:     user.Email(),
-		FirstName: user.FirstName(),
-		LastName:  user.LastName(),
-		Role:      user.Role(),
-		AvatarUrl: user.AvatarUrl(),
-	}
-
-	sessionId, err := h.sessionStore.Save(ctx, session)
-	if err != nil {
-		return nil, err
-	}
-
-	return &authdto.SignInResult{
+	return &authdto.SignInResultDto{
 		UserDto:   session.ToUserDto(),
 		SessionId: sessionId,
 	}, nil

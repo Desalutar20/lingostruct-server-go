@@ -2,6 +2,25 @@ package domain
 
 type ErrorCode int
 
+func (c ErrorCode) String() string {
+	switch c {
+	case Failure:
+		return "BAD_REQUEST"
+	case NotFound:
+		return "NOT_FOUND"
+	case Validation:
+		return "VALIDATION"
+	case Conflict:
+		return "CONFLICT"
+	case Unauthorized:
+		return "UNAUTHORIZED"
+	case AccessForbidden:
+		return "ACCESS_FORBIDDEN"
+	default:
+		return "INTERNAL"
+	}
+}
+
 const (
 	Failure ErrorCode = iota
 	NotFound
@@ -66,7 +85,7 @@ func ConflictError(message string) Error {
 	return Error{message: message, code: Conflict}
 }
 
-func UnautorizedError() Error {
+func UnauthorizedError() Error {
 	return Error{message: "Unauthorized", code: Unauthorized}
 }
 func AccessForbiddenError() Error {

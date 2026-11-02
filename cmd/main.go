@@ -93,5 +93,4 @@ func main() {
 	} else {
 		logger.Info("Server shut down gracefully.")
 	}
-
 }

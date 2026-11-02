@@ -5,6 +5,7 @@ import (
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
 	authbackgroundjobs "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/backgroundjobs"
+	"github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/oauth"
 	authroutes "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/routes"
 	authservices "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/services"
 	authusecases "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/usecases"
@@ -25,6 +26,7 @@ type ModuleDependencies struct {
 	Logger            *slog.Logger
 	AppConfig         *config.ApplicationConfig
 	RedisConfig       *config.RedisConfig
+	OAuthConfig       *config.OAuthConfig
 	UserRepository    authusecases.UserRepository
 	OutboxRepository  authusecases.OutboxRepository
 	EmailSender       authusecases.EmailSender
@@ -34,11 +36,22 @@ type ModuleDependencies struct {
 func New(deps ModuleDependencies) *Module {
 	authCache := authservices.NewAuthCache(deps.Redis, deps.AppConfig, deps.RedisKeyGenerator)
 	sessionStore := authservices.NewSessionStore(deps.Redis, deps.RedisKeyGenerator, deps.AppConfig, deps.RedisConfig)
+	oauthProviderFactory := oauth.NewOAuthProviderFactory(deps.OAuthConfig)
 
-	useCases := authusecases.New(deps.Pool, deps.UserRepository, deps.OutboxRepository, deps.EmailSender, authCache, sessionStore, deps.AppConfig)
+	useCases := authusecases.New(deps.Pool, deps.UserRepository, deps.OutboxRepository, deps.EmailSender, authCache, sessionStore, deps.AppConfig, oauthProviderFactory)
 	backgroundJobs := authbackgroundjobs.New(deps.Logger, useCases.RemoveExpiredSessionCommandHandler)
 
-	authroutes.NewV1(deps.Router, deps.Logger, useCases.SignUpCommandHandler, useCases.SignInCommandHandler)
+	authroutes.NewV1(
+		deps.Router,
+		deps.Logger,
+		deps.AppConfig,
+		useCases.SignUpCommandHandler,
+		useCases.SignInCommandHandler,
+		useCases.VerifyAccountCommandHandler,
+		useCases.ForgotPasswordCommandHandler,
+		useCases.ResetPasswordCommandHandler,
+		useCases.GenerateOAuthUrlQueryHandler,
+		useCases.OAuthSignInCommandHandler)
 
 	return &Module{
 		UseCases:       useCases,

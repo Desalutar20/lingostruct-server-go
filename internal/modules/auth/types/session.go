@@ -1,4 +1,4 @@
-package authdto
+package authtypes
 
 import (
 	"encoding/json"

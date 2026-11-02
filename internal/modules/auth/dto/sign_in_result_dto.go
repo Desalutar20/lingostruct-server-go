@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type SignInResult struct {
+type SignInResultDto struct {
 	UserDto   userdto.UserDto
 	SessionId uuid.UUID
 }

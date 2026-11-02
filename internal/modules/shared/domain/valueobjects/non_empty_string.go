@@ -12,6 +12,10 @@ type NonEmptyString struct {
 	value string
 }
 
+func (v NonEmptyString) Equal(other NonEmptyString) bool {
+	return v.value == other.value
+}
+
 func (v NonEmptyString) Value() string {
 	return v.value
 }
