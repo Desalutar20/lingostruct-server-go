@@ -40,6 +40,8 @@ type AuthUseCases struct {
 	ResetPasswordCommandHandler        *ResetPasswordCommandHandler
 	GenerateOAuthUrlQueryHandler       *GenerateOAuthUrlQueryHandler
 	OAuthSignInCommandHandler          *OAuthSignInCommandHandler
+	AuthenticateCommandHandler         *AuthenticateCommandHandler
+	LogoutCommandHandler               *LogoutCommandHandler
 }
 
 func New(
@@ -62,6 +64,8 @@ func New(
 		ResetPasswordCommandHandler:        &ResetPasswordCommandHandler{userRepository, authCache, sessionStore},
 		GenerateOAuthUrlQueryHandler:       &GenerateOAuthUrlQueryHandler{oauthProviderFactory},
 		OAuthSignInCommandHandler:          &OAuthSignInCommandHandler{userRepository, oauthProviderFactory, sessionStore, config},
+		AuthenticateCommandHandler:         &AuthenticateCommandHandler{sessionStore},
+		LogoutCommandHandler:               &LogoutCommandHandler{sessionStore},
 	}
 }
 

@@ -3,12 +3,15 @@ package authroutes
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
 	authdto "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/dto"
 	authusecases "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/usecases"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/cqrs"
+	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/routes"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httprate"
 	"github.com/google/uuid"
 )
 
@@ -23,6 +26,7 @@ type AuthRouter struct {
 	resetPasswordCommandHandler  cqrs.CommandHandler[*authusecases.ResetPasswordCommand, struct{}]
 	generateOAuthUrlQueryHandler cqrs.QueryHandler[*authusecases.GenerateOAuthUrlQuery, *authdto.OAuthSignInResultDto]
 	oauthSignInCommandHandler    cqrs.CommandHandler[*authusecases.OAuthSignInCommand, uuid.UUID]
+	logoutCommandHandler         cqrs.CommandHandler[*authusecases.LogoutCommand, struct{}]
 }
 
 func (router *AuthRouter) SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
@@ -39,8 +43,10 @@ func (router *AuthRouter) SetCookie(w http.ResponseWriter, name, value string, m
 }
 
 func NewV1(router *chi.Mux,
+	middlewares *routes.Middlewares,
 	logger *slog.Logger,
 	config *config.ApplicationConfig,
+	rateLimitConfig *config.RateLimitConfig,
 	signUpCommandHandler cqrs.CommandHandler[*authusecases.SignUpCommand, struct{}],
 	signInCommandHandler cqrs.CommandHandler[*authusecases.SignInCommand, *authdto.SignInResultDto],
 	verifyAccountCommandHandler cqrs.CommandHandler[*authusecases.VerifyAccountCommand, struct{}],
@@ -48,9 +54,8 @@ func NewV1(router *chi.Mux,
 	resetPasswordCommandHandler cqrs.CommandHandler[*authusecases.ResetPasswordCommand, struct{}],
 	generateOAuthUrlQueryHandler cqrs.QueryHandler[*authusecases.GenerateOAuthUrlQuery, *authdto.OAuthSignInResultDto],
 	oauthSignInCommandHandler cqrs.CommandHandler[*authusecases.OAuthSignInCommand, uuid.UUID],
-
+	logoutCommandHandler cqrs.CommandHandler[*authusecases.LogoutCommand, struct{}],
 ) *AuthRouter {
-
 	var authRouter = &AuthRouter{
 		router,
 		logger,
@@ -62,16 +67,26 @@ func NewV1(router *chi.Mux,
 		resetPasswordCommandHandler,
 		generateOAuthUrlQueryHandler,
 		oauthSignInCommandHandler,
+		logoutCommandHandler,
 	}
 
+	signUpLimiter := httprate.NewRateLimiter(rateLimitConfig.SignUp, time.Minute, httprate.WithLimitHandler(routes.RateLimitHandler))
+	signInLimiter := httprate.NewRateLimiter(rateLimitConfig.SignIn, time.Minute, httprate.WithLimitHandler(routes.RateLimitHandler))
+	verifyAccountLimiter := httprate.NewRateLimiter(rateLimitConfig.VerifyAccount, time.Minute, httprate.WithLimitHandler(routes.RateLimitHandler))
+	forgotPasswordLimiter := httprate.NewRateLimiter(rateLimitConfig.ForgotPassword, time.Minute, httprate.WithLimitHandler(routes.RateLimitHandler))
+	resetPasswordLimiter := httprate.NewRateLimiter(rateLimitConfig.ResetPassword, time.Minute, httprate.WithLimitHandler(routes.RateLimitHandler))
+	logoutLimiter := httprate.NewRateLimiter(rateLimitConfig.Logout, time.Minute, httprate.WithLimitHandler(routes.RateLimitHandler))
+
 	router.Route("/auth", func(r chi.Router) {
-		r.Post("/sign-up", authRouter.signUp)
-		r.Post("/sign-in", authRouter.signIn)
-		r.Post("/verify-account", authRouter.verifyAccount)
-		r.Post("/forgot-password", authRouter.forgotPassword)
-		r.Post("/reset-password", authRouter.resetPassword)
-		r.Get("/{provider}", authRouter.getOAuthUrl)
-		r.Get("/{provider}/callback", authRouter.oauthSignIn)
+		r.With(signUpLimiter.Handler).Post("/sign-up", authRouter.signUp)
+		r.With(signUpLimiter.Handler).Post("/sign-up", authRouter.signUp)
+		r.With(signInLimiter.Handler).Post("/sign-in", authRouter.signIn)
+		r.With(verifyAccountLimiter.Handler).Post("/verify-account", authRouter.verifyAccount)
+		r.With(forgotPasswordLimiter.Handler).Post("/forgot-password", authRouter.forgotPassword)
+		r.With(resetPasswordLimiter.Handler).Post("/reset-password", authRouter.resetPassword)
+		r.With(signInLimiter.Handler).Get("/{provider}", authRouter.getOAuthUrl)
+		r.With(signInLimiter.Handler).Get("/{provider}/callback", authRouter.oauthSignIn)
+		r.With(logoutLimiter.Handler).With(middlewares.Authenticate).Post("/logout", authRouter.logout)
 	})
 
 	return authRouter

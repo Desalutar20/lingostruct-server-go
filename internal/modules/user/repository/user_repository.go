@@ -178,7 +178,7 @@ func (r *UserRepository) getUser(ctx context.Context, tx pgx.Tx, query string, a
 	if tx != nil {
 		q = tx
 	}
-	var user userDB
+	var user UserDB
 
 	err := q.QueryRow(ctx, query, args...).Scan(
 		&user.ID,

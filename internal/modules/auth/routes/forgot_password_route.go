@@ -18,7 +18,7 @@ type ForgotPasswordRequest struct {
 
 func (r ForgotPasswordRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Email, validation.Required, is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
+		validation.Field(&r.Email, validation.By(routes.RequiredTrimmed), is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
 	)
 }
 

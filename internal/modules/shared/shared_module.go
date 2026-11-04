@@ -5,12 +5,14 @@ import (
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/backgroundjobs"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/outbox"
+	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/routes"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Module struct {
 	OutboxRepository *outbox.OutboxRepository
 	BackgroundJobs   *backgroundjobs.BackgroundJobs
+	Middlewares      *routes.Middlewares
 }
 
 type ModuleDependencies struct {

@@ -2,19 +2,19 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/background"
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
 	"github.com/Desalutar20/lingostruct-server-go/internal/database/postgres"
 	rd "github.com/Desalutar20/lingostruct-server-go/internal/database/redis"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/services/email"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/chi/v5"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -22,6 +22,7 @@ import (
 
 type App struct {
 	server       *http.Server
+	listener     net.Listener
 	pool         *pgxpool.Pool
 	redis        *redis.Client
 	emailService *email.EmailService
@@ -30,11 +31,20 @@ type App struct {
 }
 
 func (a *App) Run() error {
-	log.Printf("Server starting on %s.\n", a.server.Addr)
+	log.Printf("Server starting on %s.\n", a.listener.Addr())
 
 	a.jobs.Start(a.ctx)
 
-	return a.server.ListenAndServe()
+	err := a.server.Serve(a.listener)
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+
+	return err
+}
+
+func (a *App) Address() string {
+	return "http://" + a.listener.Addr().String()
 }
 
 func New(ctx context.Context, config *config.Config, logger *slog.Logger) (*App, error) {
@@ -56,17 +66,24 @@ func New(ctx context.Context, config *config.Config, logger *slog.Logger) (*App,
 		return nil, err
 	}
 
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-
-	v1 := chi.NewRouter()
-	router.Mount("/api/v1", v1)
-
-	modules := setupModules(config, pool, redis, logger, v1, services)
+	modules := setupModules(config, pool, redis, logger, services)
 	jobs := setupBackgroundJobs(logger, modules)
 
+	router := setupRouter(modules, &config.Application, logger)
+	listener, err := net.Listen(
+		"tcp",
+		net.JoinHostPort(
+			config.Application.Host,
+			strconv.Itoa(int(config.Application.Port)),
+		),
+	)
+	if err != nil {
+		pool.Close()
+		redis.Close()
+		return nil, fmt.Errorf("creating listener: %w", err)
+	}
+
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", config.Application.Host, config.Application.Port),
 		Handler: router,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
@@ -75,6 +92,7 @@ func New(ctx context.Context, config *config.Config, logger *slog.Logger) (*App,
 
 	return &App{
 		server,
+		listener,
 		pool,
 		redis,
 		services.EmailService,

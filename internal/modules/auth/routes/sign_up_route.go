@@ -22,10 +22,10 @@ type SignUpRequest struct {
 
 func (r SignUpRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Email, validation.Required, is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
-		validation.Field(&r.Password, validation.Required, validation.Length(userdomain.PasswordMinLength, userdomain.PasswordMaxLength)),
-		validation.Field(&r.FirstName, validation.Required, validation.Length(1, userdomain.FirstNameMaxLength)),
-		validation.Field(&r.LastName, validation.Required, validation.Length(1, userdomain.LastNameMaxLength)),
+		validation.Field(&r.Email, validation.By(routes.RequiredTrimmed), is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
+		validation.Field(&r.Password, validation.By(routes.RequiredTrimmed), validation.Length(userdomain.PasswordMinLength, userdomain.PasswordMaxLength)),
+		validation.Field(&r.FirstName, validation.By(routes.RequiredTrimmed), validation.Length(1, userdomain.FirstNameMaxLength)),
+		validation.Field(&r.LastName, validation.By(routes.RequiredTrimmed), validation.Length(1, userdomain.LastNameMaxLength)),
 	)
 }
 
@@ -57,6 +57,7 @@ func (r SignUpRequest) ToCommand() (*authusecases.SignUpCommand, []error) {
 }
 
 func (router *AuthRouter) signUp(w http.ResponseWriter, r *http.Request) {
+
 	request, err := routes.DecodeJSON[SignUpRequest](r)
 	if routes.WriteError(w, err, router.logger) {
 		return

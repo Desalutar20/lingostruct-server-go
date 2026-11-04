@@ -3,6 +3,8 @@ package user
 import (
 	"log/slog"
 
+	"github.com/Desalutar20/lingostruct-server-go/internal/config"
+	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/routes"
 	userrepo "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/repository"
 	userroutes "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/routes"
 	"github.com/go-chi/chi/v5"
@@ -10,20 +12,24 @@ import (
 )
 
 type Module struct {
-	UserRepository *userrepo.UserRepository
+	UserRepository  *userrepo.UserRepository
+	rateLimitConfig *config.RateLimitConfig
 }
 
 type ModuleDependencies struct {
-	Router *chi.Mux
-	Pool   *pgxpool.Pool
-	Logger *slog.Logger
+	Pool            *pgxpool.Pool
+	RateLimitConfig *config.RateLimitConfig
+}
+
+func (m *Module) ConfigureRoutes(router *chi.Mux, logger *slog.Logger, middlewares *routes.Middlewares) {
+	userroutes.NewV1(router, logger, m.rateLimitConfig, middlewares)
 }
 
 func New(deps ModuleDependencies) *Module {
 	repo := userrepo.NewUserRepository(deps.Pool)
-	userroutes.NewV1(deps.Router, deps.Logger)
 
 	return &Module{
-		UserRepository: repo,
+		UserRepository:  repo,
+		rateLimitConfig: deps.RateLimitConfig,
 	}
 }

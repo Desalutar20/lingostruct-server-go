@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type userDB struct {
+type UserDB struct {
 	ID             uuid.UUID `db:"id"`
 	CreatedAt      time.Time `db:"created_at"`
 	UpdatedAt      time.Time `db:"updated_at"`
@@ -24,7 +24,7 @@ type userDB struct {
 	GithubID       *string   `db:"github_id"`
 }
 
-func (u userDB) ToDomain() *userdomain.User {
+func (u UserDB) ToDomain() *userdomain.User {
 	return ptrutil.To(userdomain.RestoreUser(
 		u.ID,
 		u.CreatedAt,
@@ -42,8 +42,8 @@ func (u userDB) ToDomain() *userdomain.User {
 	))
 }
 
-func fromDomain(user *userdomain.User) userDB {
-	return userDB{
+func fromDomain(user *userdomain.User) UserDB {
+	return UserDB{
 		uuid.UUID(user.Id()),
 		user.CreatedAt(),
 		user.UpdatedAt(),

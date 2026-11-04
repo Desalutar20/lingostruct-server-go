@@ -28,8 +28,8 @@ func WriteError(w http.ResponseWriter, err error, log *slog.Logger) bool {
 		}
 
 		switch code {
-		case domain.Failure:
-		case domain.Validation:
+		case domain.Failure,
+			domain.Validation:
 			status = http.StatusBadRequest
 		case domain.NotFound:
 			status = http.StatusNotFound

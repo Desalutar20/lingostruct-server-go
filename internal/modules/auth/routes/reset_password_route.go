@@ -21,9 +21,9 @@ type ResetPasswordRequest struct {
 
 func (r ResetPasswordRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Email, validation.Required, is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
-		validation.Field(&r.Token, validation.Required),
-		validation.Field(&r.NewPassword, validation.Required, validation.Length(userdomain.PasswordMinLength, userdomain.PasswordMaxLength)),
+		validation.Field(&r.Email, validation.By(routes.RequiredTrimmed), is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
+		validation.Field(&r.Token, validation.By(routes.RequiredTrimmed)),
+		validation.Field(&r.NewPassword, validation.By(routes.RequiredTrimmed), validation.Length(userdomain.PasswordMinLength, userdomain.PasswordMaxLength)),
 	)
 }
 

@@ -21,8 +21,8 @@ type SignInRequest struct {
 
 func (r SignInRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Email, validation.Required, is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
-		validation.Field(&r.Password, validation.Required, validation.Length(userdomain.PasswordMinLength, userdomain.PasswordMaxLength)),
+		validation.Field(&r.Email, validation.By(routes.RequiredTrimmed), is.Email, validation.Length(1, valueobjects.EmailMaxLength)),
+		validation.Field(&r.Password, validation.By(routes.RequiredTrimmed), validation.Length(userdomain.PasswordMinLength, userdomain.PasswordMaxLength)),
 	)
 }
 
@@ -71,7 +71,7 @@ func (router *AuthRouter) signIn(w http.ResponseWriter, r *http.Request) {
 		Data: result.UserDto,
 	}); err != nil {
 		router.logger.Error(
-			"Failed to write sign-up response",
+			"Failed to write sign-in response",
 			slog.Any("error", err),
 		)
 	}
