@@ -10,15 +10,15 @@ import (
 	"github.com/go-chi/httprate"
 )
 
-type UserRouter struct {
+type Router struct {
 	router *chi.Mux
 	logger *slog.Logger
 }
 
 func NewV1(router *chi.Mux, logger *slog.Logger, rateLimitConfig *config.RateLimitConfig,
-	middlewares *routes.Middlewares) *UserRouter {
+	middlewares *routes.Middlewares) *Router {
 
-	var userRouter = &UserRouter{
+	var userRouter = &Router{
 		router,
 		logger,
 	}

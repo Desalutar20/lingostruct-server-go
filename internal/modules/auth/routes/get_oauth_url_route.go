@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (router *AuthRouter) getOAuthUrl(w http.ResponseWriter, r *http.Request) {
+func (router *Router) getOAuthUrl(w http.ResponseWriter, r *http.Request) {
 	provider, err := userdomain.NewOAuthProvider(chi.URLParam(r, "provider"))
 	if routes.WriteError(w, err, router.logger) {
 		return

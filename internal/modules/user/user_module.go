@@ -26,7 +26,7 @@ func (m *Module) ConfigureRoutes(router *chi.Mux, logger *slog.Logger, middlewar
 }
 
 func New(deps ModuleDependencies) *Module {
-	repo := userrepo.NewUserRepository(deps.Pool)
+	repo := userrepo.New(deps.Pool)
 
 	return &Module{
 		UserRepository:  repo,

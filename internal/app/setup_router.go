@@ -17,6 +17,7 @@ func setupRouter(modules *modules, config *config.ApplicationConfig, logger *slo
 
 	router.Use(middleware.Logger)
 	router.Use(middleware.ClientIPFromRemoteAddr)
+	router.Use(middleware.Recoverer)
 	router.Use(
 		httprate.LimitBy(100, time.Minute,
 			func(r *http.Request) (string, error) {
@@ -32,6 +33,7 @@ func setupRouter(modules *modules, config *config.ApplicationConfig, logger *slo
 
 	modules.AuthModule.ConfigureRoutes(v1, middlewares)
 	modules.UserModule.ConfigureRoutes(v1, logger, middlewares)
+	modules.AdminModule.ConfigureRoutes(v1, logger, middlewares)
 
 	return router
 }

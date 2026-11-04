@@ -31,7 +31,7 @@ type EmailSender interface {
 	Send(message email.EmailMessage) error
 }
 
-type AuthUseCases struct {
+type UseCases struct {
 	SignUpCommandHandler               *SignUpCommandHandler
 	SignInCommandHandler               *SignInCommandHandler
 	RemoveExpiredSessionCommandHandler *RemoveExpiredSessionCommandHandler
@@ -53,9 +53,9 @@ func New(
 	sessionStore *authservices.SessionStore,
 	config *config.ApplicationConfig,
 	oauthProviderFactory *oauth.OAuthProviderFactory,
-) *AuthUseCases {
+) *UseCases {
 
-	return &AuthUseCases{
+	return &UseCases{
 		SignUpCommandHandler:               &SignUpCommandHandler{pool, config, userRepository, outboxRepository, emailSender, authCache},
 		SignInCommandHandler:               &SignInCommandHandler{userRepository, sessionStore, config},
 		RemoveExpiredSessionCommandHandler: &RemoveExpiredSessionCommandHandler{sessionStore},

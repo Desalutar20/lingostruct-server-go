@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	authroutes "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/routes"
+	userdomain "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/domain"
 )
 
 func (a *TestApp) SignUp(
@@ -12,7 +13,7 @@ func (a *TestApp) SignUp(
 	request *authroutes.SignUpRequest,
 ) *http.Response {
 	t.Helper()
-	return a.Request(t, request, "/api/v1/auth/sign-up")
+	return a.Request(t, request, "/api/v1/auth/sign-up", nil)
 }
 
 func (a *TestApp) VerifyAccount(
@@ -20,7 +21,7 @@ func (a *TestApp) VerifyAccount(
 	request *authroutes.VerifyAccountRequest,
 ) *http.Response {
 	t.Helper()
-	return a.Request(t, request, "/api/v1/auth/verify-account")
+	return a.Request(t, request, "/api/v1/auth/verify-account", nil)
 }
 
 func (a *TestApp) CreateAndVerify(t *testing.T, request *authroutes.SignUpRequest) {
@@ -47,7 +48,7 @@ func (a *TestApp) SignIn(
 	request *authroutes.SignInRequest,
 ) *http.Response {
 	t.Helper()
-	return a.Request(t, request, "/api/v1/auth/sign-in")
+	return a.Request(t, request, "/api/v1/auth/sign-in", nil)
 }
 
 func (a *TestApp) ForgotPassword(
@@ -55,7 +56,7 @@ func (a *TestApp) ForgotPassword(
 	request *authroutes.ForgotPasswordRequest,
 ) *http.Response {
 	t.Helper()
-	return a.Request(t, request, "/api/v1/auth/forgot-password")
+	return a.Request(t, request, "/api/v1/auth/forgot-password", nil)
 }
 
 func (a *TestApp) ResetPassword(
@@ -63,5 +64,25 @@ func (a *TestApp) ResetPassword(
 	request *authroutes.ResetPasswordRequest,
 ) *http.Response {
 	t.Helper()
-	return a.Request(t, request, "/api/v1/auth/reset-password")
+	return a.Request(t, request, "/api/v1/auth/reset-password", nil)
+}
+
+func (a *TestApp) CreateAndSignIn(t *testing.T, request *authroutes.SignUpRequest, role *userdomain.UserRole) []*http.Cookie {
+	t.Helper()
+
+	a.CreateAndVerify(t, request)
+	if role != nil {
+		_, err := a.pool.Exec(t.Context(), "UPDATE users SET role=$1 WHERE email = $2", role.Value(), request.Email)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	response := a.SignIn(t, &authroutes.SignInRequest{Email: request.Email, Password: request.Password})
+	defer response.Body.Close()
+
+	a.AssertValidStatus(t, response, http.StatusOK)
+
+	return response.Cookies()
+
 }

@@ -4,12 +4,14 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"slices"
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
 	authtypes "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/types"
 	authusecases "github.com/Desalutar20/lingostruct-server-go/internal/modules/auth/usecases"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/cqrs"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/domain"
+	userdomain "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/domain"
 	"github.com/google/uuid"
 )
 
@@ -26,7 +28,8 @@ type Middlewares struct {
 func (m *Middlewares) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(m.config.SessionCookieName)
-		if WriteError(w, err, m.logger) {
+		if err != nil {
+			WriteError(w, domain.UnauthorizedError(), m.logger)
 			return
 		}
 
@@ -52,6 +55,25 @@ func (m *Middlewares) Authenticate(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (m *Middlewares) Authorize(roles []userdomain.UserRole) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, _, ok := GetSession(r.Context())
+			if !ok {
+				WriteError(w, domain.UnauthorizedError(), m.logger)
+				return
+			}
+
+			if !slices.Contains(roles, session.Role) {
+				WriteError(w, domain.AccessForbiddenError(), m.logger)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func GetSession(ctx context.Context) (*authtypes.Session, uuid.UUID, bool) {

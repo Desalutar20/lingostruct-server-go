@@ -47,7 +47,7 @@ func (r VerifyAccountRequest) ToCommand() (*authusecases.VerifyAccountCommand, [
 	}, nil
 }
 
-func (router *AuthRouter) verifyAccount(w http.ResponseWriter, r *http.Request) {
+func (router *Router) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	request, err := routes.DecodeJSON[VerifyAccountRequest](r)
 	if routes.WriteError(w, err, router.logger) {
 		return

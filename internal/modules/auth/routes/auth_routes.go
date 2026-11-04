@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type AuthRouter struct {
+type Router struct {
 	router                       *chi.Mux
 	logger                       *slog.Logger
 	config                       *config.ApplicationConfig
@@ -29,7 +29,7 @@ type AuthRouter struct {
 	logoutCommandHandler         cqrs.CommandHandler[*authusecases.LogoutCommand, struct{}]
 }
 
-func (router *AuthRouter) SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
+func (router *Router) SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
@@ -55,8 +55,8 @@ func NewV1(router *chi.Mux,
 	generateOAuthUrlQueryHandler cqrs.QueryHandler[*authusecases.GenerateOAuthUrlQuery, *authdto.OAuthSignInResultDto],
 	oauthSignInCommandHandler cqrs.CommandHandler[*authusecases.OAuthSignInCommand, uuid.UUID],
 	logoutCommandHandler cqrs.CommandHandler[*authusecases.LogoutCommand, struct{}],
-) *AuthRouter {
-	var authRouter = &AuthRouter{
+) *Router {
+	var authRouter = &Router{
 		router,
 		logger,
 		config,

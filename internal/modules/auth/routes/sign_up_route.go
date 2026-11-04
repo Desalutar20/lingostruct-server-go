@@ -56,7 +56,7 @@ func (r SignUpRequest) ToCommand() (*authusecases.SignUpCommand, []error) {
 	}, nil
 }
 
-func (router *AuthRouter) signUp(w http.ResponseWriter, r *http.Request) {
+func (router *Router) signUp(w http.ResponseWriter, r *http.Request) {
 
 	request, err := routes.DecodeJSON[SignUpRequest](r)
 	if routes.WriteError(w, err, router.logger) {

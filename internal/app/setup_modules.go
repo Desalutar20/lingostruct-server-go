@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/Desalutar20/lingostruct-server-go/internal/config"
+	"github.com/Desalutar20/lingostruct-server-go/internal/modules/admin"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/auth"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared"
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/outbox"
@@ -16,6 +17,7 @@ type modules struct {
 	SharedModule *shared.Module
 	UserModule   *user.Module
 	AuthModule   *auth.Module
+	AdminModule  *admin.Module
 }
 
 func setupModules(config *config.Config, pool *pgxpool.Pool, redis *redis.Client, logger *slog.Logger, services *services) *modules {
@@ -34,11 +36,15 @@ func setupModules(config *config.Config, pool *pgxpool.Pool, redis *redis.Client
 		EmailSender:       services.EmailService,
 		RedisKeyGenerator: services.RedisKeyGenerator,
 	})
+	adminModule := admin.New(admin.ModuleDependencies{
+		Pool: pool,
+	})
 
 	return &modules{
 		SharedModule: sharedModule,
 		UserModule:   userModule,
 		AuthModule:   authModule,
+		AdminModule:  adminModule,
 	}
 
 }

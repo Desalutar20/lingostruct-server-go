@@ -9,7 +9,7 @@ import (
 	userdto "github.com/Desalutar20/lingostruct-server-go/internal/modules/user/dto"
 )
 
-func (router *UserRouter) GetMe(w http.ResponseWriter, r *http.Request) {
+func (router *Router) GetMe(w http.ResponseWriter, r *http.Request) {
 	session, _, ok := routes.GetSession(r.Context())
 	if !ok {
 		routes.WriteError(w, domain.UnauthorizedError(), router.logger)

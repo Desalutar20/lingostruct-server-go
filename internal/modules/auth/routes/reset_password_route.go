@@ -52,7 +52,7 @@ func (r ResetPasswordRequest) ToCommand() (*authusecases.ResetPasswordCommand, [
 	}, nil
 }
 
-func (router *AuthRouter) resetPassword(w http.ResponseWriter, r *http.Request) {
+func (router *Router) resetPassword(w http.ResponseWriter, r *http.Request) {
 	request, err := routes.DecodeJSON[ResetPasswordRequest](r)
 	if routes.WriteError(w, err, router.logger) {
 		return

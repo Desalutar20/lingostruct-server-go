@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (router *AuthRouter) oauthSignIn(w http.ResponseWriter, r *http.Request) {
+func (router *Router) oauthSignIn(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(router.config.OAauthStateCookieName)
 	if routes.WriteError(w, err, router.logger) {
 		return

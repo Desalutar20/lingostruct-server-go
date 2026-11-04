@@ -9,7 +9,7 @@ import (
 	"github.com/Desalutar20/lingostruct-server-go/internal/modules/shared/routes"
 )
 
-func (router *AuthRouter) logout(w http.ResponseWriter, r *http.Request) {
+func (router *Router) logout(w http.ResponseWriter, r *http.Request) {
 	session, sessionId, ok := routes.GetSession(r.Context())
 	if !ok {
 		routes.WriteError(w, domain.UnauthorizedError(), router.logger)

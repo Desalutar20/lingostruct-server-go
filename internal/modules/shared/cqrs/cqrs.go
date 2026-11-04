@@ -7,5 +7,5 @@ type CommandHandler[TCommand any, TResult any] interface {
 }
 
 type QueryHandler[TQuery any, TResult any] interface {
-	Handle(ctx context.Context, command TQuery) (TResult, error)
+	Handle(ctx context.Context, query TQuery) (TResult, error)
 }

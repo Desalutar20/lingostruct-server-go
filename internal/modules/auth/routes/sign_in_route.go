@@ -49,7 +49,7 @@ func (r SignInRequest) ToCommand() (*authusecases.SignInCommand, []error) {
 	}, nil
 }
 
-func (router *AuthRouter) signIn(w http.ResponseWriter, r *http.Request) {
+func (router *Router) signIn(w http.ResponseWriter, r *http.Request) {
 	request, err := routes.DecodeJSON[SignInRequest](r)
 	if routes.WriteError(w, err, router.logger) {
 		return

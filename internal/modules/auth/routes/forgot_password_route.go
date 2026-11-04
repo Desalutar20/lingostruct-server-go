@@ -43,7 +43,7 @@ func (r ForgotPasswordRequest) ToCommand() (*authusecases.ForgotPasswordCommand,
 	}, nil
 }
 
-func (router *AuthRouter) forgotPassword(w http.ResponseWriter, r *http.Request) {
+func (router *Router) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	request, err := routes.DecodeJSON[ForgotPasswordRequest](r)
 	if routes.WriteError(w, err, router.logger) {
 		return

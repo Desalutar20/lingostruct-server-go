@@ -109,12 +109,68 @@ func setupPostgres(
 		return nil, nil, fmt.Errorf("connecting to test database: %w", err)
 	}
 
+	if err := seedUsers(ctx, pool); err != nil {
+		pool.Close()
+		cleanupDatabase()
+		return nil, nil, err
+	}
+
 	cleanup := func() {
 		pool.Close()
 		cleanupDatabase()
 	}
 
 	return pool, cleanup, nil
+}
+
+func seedUsers(ctx context.Context, pool *pgxpool.Pool) error {
+	users := usersSeedData()
+
+	rows := make([][]any, 0, len(users))
+
+	for _, user := range users {
+		rows = append(rows, []any{
+			user.ID,
+			user.CreatedAt,
+			user.UpdatedAt,
+			user.Email,
+			user.FirstName,
+			user.LastName,
+			user.HashedPassword,
+			user.Role,
+			user.IsBanned,
+			user.IsVerified,
+			user.AvatarURL,
+			user.GoogleID,
+			user.GithubID,
+		})
+	}
+
+	_, err := pool.CopyFrom(
+		ctx,
+		pgx.Identifier{"users"},
+		[]string{
+			"id",
+			"created_at",
+			"updated_at",
+			"email",
+			"first_name",
+			"last_name",
+			"hashed_password",
+			"role",
+			"is_banned",
+			"is_verified",
+			"avatar_url",
+			"google_id",
+			"github_id",
+		},
+		pgx.CopyFromRows(rows),
+	)
+	if err != nil {
+		return fmt.Errorf("seeding users: %w", err)
+	}
+
+	return nil
 }
 
 func setupRedis(ctx context.Context, config *config.RedisConfig) (*redis.Client, func(), error) {

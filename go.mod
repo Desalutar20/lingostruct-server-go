@@ -19,6 +19,8 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/brianvoe/gofakeit/v7 v7.18.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/ggicci/httpin v0.20.5 // indirect
+	github.com/ggicci/owl v0.8.2 // indirect
 	github.com/go-faker/faker/v4 v4.12.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

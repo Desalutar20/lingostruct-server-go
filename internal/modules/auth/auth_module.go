@@ -16,7 +16,7 @@ import (
 )
 
 type Module struct {
-	UseCases        *authusecases.AuthUseCases
+	UseCases        *authusecases.UseCases
 	BackgroundJobs  *authbackgroundjobs.AuthBackgroundJobs
 	logger          *slog.Logger
 	appConfig       *config.ApplicationConfig
